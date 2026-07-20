@@ -78,8 +78,8 @@ jobs:
       - name: No unfilled template placeholders
         shell: bash
         run: |
-          if grep -rIn --exclude-dir=.git '{{[A-Z_]\+}}' .; then
-            echo "::error::unfilled {{PLACEHOLDER}} left in the repository"
+          if grep -rIn --exclude-dir=.git --exclude=ci.yml '{{[A-Z_]\+}}' .; then
+            echo "::error::unfilled template placeholder left in the repository"
             exit 1
           fi
 
