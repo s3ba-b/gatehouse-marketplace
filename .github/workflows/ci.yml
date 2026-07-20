@@ -28,7 +28,7 @@ jobs:
       frontend: ${{ steps.check.outputs.frontend }}
       security-tests: ${{ steps.check.outputs.security-tests }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - id: check
         shell: bash
@@ -58,7 +58,7 @@ jobs:
     name: Docs and secret hygiene
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The repo must stay self-contained: a contributor who only has this
       # repository needs all of these to get oriented.
@@ -98,7 +98,7 @@ jobs:
     if: needs.detect.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -127,7 +127,7 @@ jobs:
     if: needs.detect.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -160,7 +160,7 @@ jobs:
     if: needs.detect.outputs.security-tests == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v4
         with:
