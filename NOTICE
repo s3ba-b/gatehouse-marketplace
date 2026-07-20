@@ -1,7 +1,18 @@
-{{PROJECT_NAME}}
-Copyright {{YEAR}} {{COPYRIGHT_OWNER}}
+Gatehouse — Multi-Vendor Marketplace as a Showcase for an Ory OSS Identity & Access Layer
+Copyright 2026 Sebastian Bobrowski
 
-This product includes software developed by {{COPYRIGHT_OWNER}}.
+This product includes software developed by Sebastian Bobrowski.
 
-Licensed under the Apache License, Version 2.0. See the LICENSE file for the
-full license text.
+Licensed under the GNU Affero General Public License, Version 3.0. See the LICENSE
+file for the full license text.
+
+---
+
+This project uses, but does not include or link, the Ory open-source components
+(Kratos, Hydra, Keto, Oathkeeper), which are licensed under the Apache License,
+Version 2.0. They run as separate container processes and are reached over HTTP.
+Should any Apache-2.0 licensed code be redistributed as part of this project, its
+attribution and NOTICE obligations continue to apply.
+
+Gatehouse is not affiliated with, endorsed by, or sponsored by Ory Corp.
+"Ory" is a trademark of its respective owner.

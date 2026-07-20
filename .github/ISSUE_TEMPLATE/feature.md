@@ -36,12 +36,14 @@ assignees: []
 
 ## Core architectural rule
 
-<!-- If the charter defines a non-negotiable rule enforced as a CI gate (e.g.
-     tenant isolation), keep this section and state its checklist line below so
-     every relevant PR has to address it. Delete this whole section if the
-     charter defines no such rule. -->
+<!-- Gatehouse's release gate: no request reaches a .NET service without passing
+     through Oathkeeper, and no vendor can see another vendor's data. See
+     CONTRIBUTING.md. Tick what applies; N/A only if this change touches neither
+     a protected endpoint nor a vendor-scoped entity. -->
 
-- [ ] {{CORE_RULE_CHECK}}
+- [ ] Every protected endpoint this adds or touches is covered by an Oathkeeper access rule **and** a negative test proving a gateway-bypassing request is rejected
+- [ ] Every vendor-scoped entity this adds or touches ships with a cross-vendor isolation test
+- [ ] No authentication/authorization logic was added to a .NET service (decisions stay in Keto tuples + Oathkeeper policy)
 - [ ] N/A — this change doesn't touch it
 
 ## Related issues / dependencies

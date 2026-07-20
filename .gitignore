@@ -1,0 +1,76 @@
+# ---------------------------------------------------------------------------
+# Secrets — never commit. See CONTRIBUTING.md: Hydra signing keys, OAuth2 client
+# secrets, and database credentials come from env vars and GitHub Secrets.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!**/testdata/**/*.pem
+secrets/
+
+# ---------------------------------------------------------------------------
+# .NET
+# ---------------------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+project.lock.json
+project.fragment.lock.json
+.vs/
+.dotnet/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Test results and coverage
+[Tt]est[Rr]esult*/
+TestResults/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+*.trx
+
+# ---------------------------------------------------------------------------
+# Node / Angular
+# ---------------------------------------------------------------------------
+node_modules/
+dist/
+tmp/
+out-tsc/
+.angular/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.tsbuildinfo
+.eslintcache
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.swp
+.DS_Store
+Thumbs.db

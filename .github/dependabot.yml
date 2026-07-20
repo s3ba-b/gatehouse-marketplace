@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Backend — .NET 10 services, Aspire AppHost, test projects.
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # Front-end — Angular SPAs (storefront, vendor back-office, login/consent UI).
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # Ory component images are pinned deliberately (configuration formats have
+  # changed between releases) — Dependabot proposes the bump, we merge it in a
+  # controlled window with the config smoke tests green.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

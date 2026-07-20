@@ -1,0 +1,172 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  NODE_VERSION: "22.x"
+  DOTNET_NOLOGO: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+jobs:
+  # The repository is scaffolded before the code lands (M0 builds the walking
+  # skeleton). Each job below is real and runs the moment its part of the tree
+  # exists; until then it is skipped rather than faked green.
+  detect:
+    name: Detect what exists
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.check.outputs.backend }}
+      frontend: ${{ steps.check.outputs.frontend }}
+      security-tests: ${{ steps.check.outputs.security-tests }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: check
+        shell: bash
+        run: |
+          backend=false
+          frontend=false
+          security=false
+          if compgen -G "**/*.sln" > /dev/null || compgen -G "**/*.csproj" > /dev/null; then
+            backend=true
+          fi
+          if [ -f package.json ] || compgen -G "src/*/package.json" > /dev/null; then
+            frontend=true
+          fi
+          if compgen -G "tests/*[Ss]ecurity*/*.csproj" > /dev/null \
+            || compgen -G "tests/*[Ii]solation*/*.csproj" > /dev/null; then
+            security=true
+          fi
+          {
+            echo "backend=$backend"
+            echo "frontend=$frontend"
+            echo "security-tests=$security"
+          } >> "$GITHUB_OUTPUT"
+        env:
+          GLOBIGNORE: ""
+
+  docs:
+    name: Docs and secret hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The repo must stay self-contained: a contributor who only has this
+      # repository needs all of these to get oriented.
+      - name: Required documents are present
+        shell: bash
+        run: |
+          missing=0
+          for f in README.md CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md \
+                   LICENSE NOTICE CHARTER.md ROADMAP.md GLOSSARY.md PRIVACY.md; do
+            if [ ! -f "$f" ]; then
+              echo "::error file=$f::required document is missing"
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - name: No unfilled template placeholders
+        shell: bash
+        run: |
+          if grep -rIn --exclude-dir=.git '{{[A-Z_]\+}}' .; then
+            echo "::error::unfilled {{PLACEHOLDER}} left in the repository"
+            exit 1
+          fi
+
+      # Secrets must come from env vars and GitHub Secrets, never the repo.
+      - name: No committed secret files
+        shell: bash
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.(local|production)$|\.pem$|\.p12$|\.pfx$'; then
+            echo "::error::a secret-bearing file is tracked in git"
+            exit 1
+          fi
+
+  backend:
+    name: Backend (.NET)
+    needs: detect
+    if: needs.detect.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # CI and contributors run the identical formatter version — it is pinned in
+      # .config/dotnet-tools.json.
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Format gate (CSharpier)
+        run: dotnet csharpier check .
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+  frontend:
+    name: Front-end (Angular)
+    needs: detect
+    if: needs.detect.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Format gate (Prettier)
+        run: npx prettier --check .
+
+      - name: Lint gate (ESLint)
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+  # ---------------------------------------------------------------------------
+  # The release gate. The project's core invariant is that no request reaches a
+  # .NET service without passing through Oathkeeper, and no vendor can see
+  # another vendor's data. A failure here blocks the merge — see CONTRIBUTING.md.
+  # ---------------------------------------------------------------------------
+  security-gate:
+    name: Security gate (gateway bypass + vendor isolation)
+    needs: detect
+    if: needs.detect.outputs.security-tests == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Testcontainers brings up the Ory components and PostgreSQL; Docker is
+      # available on the GitHub-hosted runner out of the box.
+      - name: Run the security test suite
+        run: dotnet test --configuration Release --filter "Category=Security|Category=Isolation" --verbosity normal

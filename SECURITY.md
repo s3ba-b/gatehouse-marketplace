@@ -2,10 +2,10 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in {{PROJECT_NAME}}, please report it
+If you discover a security vulnerability in Gatehouse, please report it
 privately. **Do not open a public issue.**
 
-- Email: **{{CONTACT_EMAIL}}**
+- Email: **seb.bobrowski@proton.me**
 - Alternatively, use GitHub's
   [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
   if enabled on this repository.
