@@ -33,17 +33,22 @@ jobs:
       - id: check
         shell: bash
         run: |
+          # Detect against the tracked file list rather than shell globs: this is
+          # depth-agnostic and needs no `shopt -s globstar` (a `**/…` glob does
+          # NOT recurse in a default non-interactive bash, so it would miss files
+          # in subdirectories and leave the build/test/security jobs silently
+          # skipped — i.e. falsely green — once code lands).
+          files="$(git ls-files)"
           backend=false
           frontend=false
           security=false
-          if compgen -G "**/*.sln" > /dev/null || compgen -G "**/*.csproj" > /dev/null; then
+          if grep -qiE '\.(sln|csproj)$' <<< "$files"; then
             backend=true
           fi
-          if [ -f package.json ] || compgen -G "src/*/package.json" > /dev/null; then
+          if grep -qE '(^|/)package\.json$' <<< "$files"; then
             frontend=true
           fi
-          if compgen -G "tests/*[Ss]ecurity*/*.csproj" > /dev/null \
-            || compgen -G "tests/*[Ii]solation*/*.csproj" > /dev/null; then
+          if grep -qE 'tests/.*([Ss]ecurity|[Ii]solation).*\.csproj$' <<< "$files"; then
             security=true
           fi
           {
@@ -51,8 +56,7 @@ jobs:
             echo "frontend=$frontend"
             echo "security-tests=$security"
           } >> "$GITHUB_OUTPUT"
-        env:
-          GLOBIGNORE: ""
+          echo "Detected — backend=$backend frontend=$frontend security-tests=$security"
 
   docs:
     name: Docs and secret hygiene
