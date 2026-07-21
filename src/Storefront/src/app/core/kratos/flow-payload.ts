@@ -7,17 +7,17 @@ export function toNestedPayload(values: Readonly<Record<string, unknown>>): obje
 
   for (const [path, value] of Object.entries(values)) {
     const segments = path.split('.');
-    let target = payload;
+    const lastSegment = segments.pop()!;
 
-    for (let i = 0; i < segments.length - 1; i++) {
-      const segment = segments[i];
-      const next = target[segment];
-      target = (
-        typeof next === 'object' && next !== null ? next : (target[segment] = {})
-      ) as Record<string, unknown>;
+    let target = payload;
+    for (const segment of segments) {
+      if (typeof target[segment] !== 'object' || target[segment] === null) {
+        target[segment] = {};
+      }
+      target = target[segment] as Record<string, unknown>;
     }
 
-    target[segments[segments.length - 1]] = value;
+    target[lastSegment] = value;
   }
 
   return payload;
