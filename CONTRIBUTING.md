@@ -37,7 +37,10 @@ aspire run
 ## Running tests
 
 ```bash
-# TODO (M0): dotnet test for the backend, Playwright for the e2e flows
+# Backend (unit + Aspire/Testcontainers integration tests, incl. the security gate)
+dotnet test
+
+# TODO (M0): Playwright for the e2e flows
 ```
 
 ## The core architectural rule
