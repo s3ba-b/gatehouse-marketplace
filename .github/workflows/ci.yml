@@ -130,6 +130,11 @@ jobs:
     needs: detect
     if: needs.detect.outputs.frontend == 'true'
     runs-on: ubuntu-latest
+    # The Storefront workspace lives under src/ (grouped with the .NET services,
+    # not at repo root), so every step below runs from there.
+    defaults:
+      run:
+        working-directory: src/Storefront
     steps:
       - uses: actions/checkout@v7
 
@@ -137,6 +142,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          cache-dependency-path: src/Storefront/package-lock.json
 
       - name: Install
         run: npm ci
