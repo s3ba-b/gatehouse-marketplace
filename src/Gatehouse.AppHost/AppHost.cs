@@ -5,6 +5,11 @@ var builder = DistributedApplication.CreateBuilder(args);
 const string kratosImage = "oryd/kratos";
 const string kratosImageTag = "v26.2.0";
 
+// Same pinning discipline as Kratos — review the Oathkeeper changelog before
+// bumping (CHARTER.md).
+const string oathkeeperImage = "oryd/oathkeeper";
+const string oathkeeperImageTag = "v0.40.9";
+
 var postgres = builder.AddPostgres("postgres").WithImageTag("18.4").WithDataVolume();
 
 // Kratos gets its own database, separate from the future application domain database
@@ -24,7 +29,7 @@ var kratosMigrate = builder
     .WithArgs("migrate", "sql", "-e", "--yes")
     .WaitFor(kratosDb);
 
-builder
+var kratos = builder
     .AddContainer("kratos", kratosImage, kratosImageTag)
     .WithBindMount(kratosConfigPath, "/etc/config/kratos", isReadOnly: true)
     .WithEnvironment("DSN", kratosDsn)
@@ -37,9 +42,33 @@ builder
     .WaitFor(kratosDb)
     .WaitForCompletion(kratosMigrate);
 
-// The first .NET service for M0's walking skeleton (CLAUDE.md). No auth of its
-// own and no gateway in front of it yet — direct reachability is intentional
-// until the Oathkeeper gateway issue lands.
-builder.AddProject<Projects.Gatehouse_Catalog>("catalog");
+// The first .NET service for M0's walking skeleton (CLAUDE.md). Oathkeeper below
+// is the only intended way in; nothing else in the app model routes to it.
+var catalog = builder.AddProject<Projects.Gatehouse_Catalog>("catalog");
+
+var oathkeeperConfigPath = Path.Combine(builder.AppHostDirectory, "oathkeeper");
+
+// Gateway in front of the Catalog service (issue #7 / ADR 0001): Kratos session
+// cookie -> placeholder allow-all authorizer (Keto lands in M2) -> signed id_token
+// mutator. Access rules are versioned config (access-rules.json.tmpl in this repo),
+// not application code — but the `catalog` upstream address is only known once
+// Aspire resolves the container tunnel to that (host-process) project, so the
+// template is rendered into /tmp at container start rather than baked in.
+builder
+    .AddContainer("oathkeeper", oathkeeperImage, oathkeeperImageTag)
+    .WithBindMount(oathkeeperConfigPath, "/etc/config/oathkeeper", isReadOnly: true)
+    .WithReference(catalog)
+    .WithEntrypoint("sh")
+    .WithArgs(
+        "-c",
+        "sed \"s#__CATALOG_UPSTREAM_URL__#$services__catalog__http__0#\" "
+            + "/etc/config/oathkeeper/access-rules.json.tmpl > /tmp/access-rules.json && "
+            + "exec oathkeeper serve --config /etc/config/oathkeeper/oathkeeper.yml"
+    )
+    .WithHttpEndpoint(port: 4455, targetPort: 4455, name: "proxy", isProxied: false)
+    .WithHttpEndpoint(port: 4456, targetPort: 4456, name: "api", isProxied: false)
+    .WithHttpHealthCheck("/health/alive", endpointName: "api")
+    .WaitFor(kratos)
+    .WaitFor(catalog);
 
 builder.Build().Run();

@@ -1,0 +1,58 @@
+serve:
+  proxy:
+    port: 4455
+    cors:
+      enabled: true
+      allowed_origins:
+        - "*"
+  api:
+    port: 4456
+
+access_rules:
+  matching_strategy: glob
+  repositories:
+    # Rendered from access-rules.json.tmpl (this directory) at container start —
+    # see AppHost.cs and docs/adr/0001-oathkeeper-gateway-chain.md. The Catalog
+    # upstream address is only known once Aspire resolves the container tunnel to
+    # the (host-process) Catalog service, so the template is substituted into
+    # /tmp rather than baked into the checked-in, versioned template itself.
+    - file:///tmp/access-rules.json
+
+errors:
+  fallback:
+    - json
+  handlers:
+    json:
+      enabled: true
+      config:
+        verbose: true
+
+authenticators:
+  # Validates the Ory Kratos session cookie against Kratos's public API. The only
+  # authenticator enabled for M0 — Hydra/OAuth2 token support is M4 (CHARTER.md).
+  cookie_session:
+    enabled: true
+    config:
+      check_session_url: http://kratos:4433/sessions/whoami
+      preserve_path: true
+      extra_from: "@this"
+      subject_from: "identity.id"
+      only:
+        - ory_kratos_session
+
+authorizers:
+  # Placeholder: allows every authenticated request. Keto doesn't exist until M2,
+  # so there is no per-vendor decision to make yet. Intentional and temporary —
+  # see docs/adr/0001-oathkeeper-gateway-chain.md.
+  allow:
+    enabled: true
+
+mutators:
+  id_token:
+    enabled: true
+    config:
+      # Dev-only RS256 signing key committed for the walking skeleton, same
+      # posture as kratos.yml's secrets — never use outside local development.
+      jwks_url: file:///etc/config/oathkeeper/id_token.jwks.json
+      issuer_url: http://localhost:4456/
+      ttl: 1m
