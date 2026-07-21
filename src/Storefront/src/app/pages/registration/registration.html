@@ -1,13 +1,19 @@
-<h1>Create your account</h1>
+<div class="mx-auto max-w-md p-6">
+  <h1 class="text-2xl font-semibold">Create your account</h1>
 
-@if (error()) {
-  <p class="page-error">{{ error() }}</p>
-}
+  @if (error()) {
+    <p class="mt-4 text-red-700">{{ error() }}</p>
+  }
 
-@if (flow(); as currentFlow) {
-  <app-kratos-flow-form [flow]="currentFlow" (submitted)="onSubmitted($event)" />
-} @else if (!error()) {
-  <p>Loading…</p>
-}
+  @if (flow(); as currentFlow) {
+    <div class="mt-4">
+      <app-kratos-flow-form [flow]="currentFlow" (submitted)="onSubmitted($event)" />
+    </div>
+  } @else if (!error()) {
+    <p class="mt-4">Loading…</p>
+  }
 
-<p><a routerLink="/login">Already have an account? Log in</a></p>
+  <p class="mt-4">
+    <a routerLink="/login" class="text-blue-600 hover:underline">Already have an account? Log in</a>
+  </p>
+</div>

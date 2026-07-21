@@ -10,7 +10,6 @@ import { KratosFlow, KratosUiNode, KratosUiText } from '../../core/kratos/kratos
   selector: 'app-kratos-flow-form',
   imports: [ReactiveFormsModule],
   templateUrl: './kratos-flow-form.html',
-  styleUrl: './kratos-flow-form.scss',
 })
 export class KratosFlowForm implements OnChanges {
   @Input({ required: true }) flow!: KratosFlow;

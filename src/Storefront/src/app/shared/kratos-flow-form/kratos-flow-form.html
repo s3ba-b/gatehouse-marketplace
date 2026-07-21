@@ -1,17 +1,17 @@
-<div class="kratos-flow-form">
+<div>
   @for (message of flowMessages; track message.id) {
-    <p class="kratos-message" [class.kratos-message--error]="message.type === 'error'">
+    <p class="mb-2" [class.text-red-700]="message.type === 'error'">
       {{ message.text }}
     </p>
   }
 
-  <form [formGroup]="form" (ngSubmit)="onFormSubmit($event)">
+  <form [formGroup]="form" (ngSubmit)="onFormSubmit($event)" class="flex flex-col gap-4">
     @for (node of hiddenFieldNodes; track node.attributes.name) {
       <input type="hidden" [formControlName]="controlKey(node.attributes.name)" />
     }
 
     @for (node of textFieldNodes; track node.attributes.name) {
-      <label class="kratos-field">
+      <label class="flex flex-col gap-1">
         <span>{{ labelFor(node) }}</span>
         <input
           [type]="node.attributes.type"
@@ -19,15 +19,16 @@
           [required]="!!node.attributes.required"
           [attr.autocomplete]="node.attributes.autocomplete ?? null"
           [attr.data-kratos-node]="node.attributes.name"
+          class="rounded border border-gray-300 px-3 py-2"
         />
         @for (message of node.messages; track message.id) {
-          <span class="kratos-message kratos-message--error">{{ message.text }}</span>
+          <span class="text-sm text-red-700">{{ message.text }}</span>
         }
       </label>
     }
 
     @for (node of checkboxFieldNodes; track node.attributes.name) {
-      <label class="kratos-field kratos-field--checkbox">
+      <label class="flex flex-row items-center gap-2">
         <input
           type="checkbox"
           [formControlName]="controlKey(node.attributes.name)"
@@ -43,6 +44,7 @@
         [attr.name]="node.attributes.name"
         [attr.value]="node.attributes.value"
         [attr.data-kratos-node]="node.attributes.name + ':' + node.attributes.value"
+        class="self-start rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
       >
         {{ labelFor(node) }}
       </button>

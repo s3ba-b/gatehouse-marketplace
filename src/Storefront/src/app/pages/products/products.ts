@@ -20,7 +20,6 @@ interface Product {
   selector: 'app-products',
   imports: [CurrencyPipe, RouterLink],
   templateUrl: './products.html',
-  styleUrl: './products.scss',
 })
 export class Products implements OnInit {
   private readonly http = inject(HttpClient);

@@ -13,12 +13,10 @@
   "private": true,
   "packageManager": "npm@11.13.0",
   "dependencies": {
-    "@angular/cdk": "^22.0.5",
     "@angular/common": "^22.0.0",
     "@angular/compiler": "^22.0.0",
     "@angular/core": "^22.0.0",
     "@angular/forms": "^22.0.0",
-    "@angular/material": "^22.0.5",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
     "rxjs": "~7.8.0",
@@ -30,6 +28,7 @@
     "@angular/compiler-cli": "^22.0.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/jasmine": "~6.0.0",
     "angular-eslint": "22.1.0",
     "eslint": "^10.6.0",
@@ -41,6 +40,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.2.0",
     "prettier": "^3.8.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "typescript-eslint": "8.62.1"
   }

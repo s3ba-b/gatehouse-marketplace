@@ -84,7 +84,7 @@ describe('KratosFlowForm', () => {
 
   it('renders a labelled field per non-hidden, non-action node', () => {
     const labels = (fixture.nativeElement as HTMLElement).querySelectorAll(
-      '.kratos-field span:first-child',
+      'label > span:first-child',
     );
     expect(labels.length).toBe(2);
     expect(labels[0].textContent).toContain('Email');
@@ -123,9 +123,6 @@ describe('KratosFlowForm', () => {
     fixture.componentRef.setInput('flow', nextFlow);
     fixture.detectChanges();
 
-    const errorMessage = (fixture.nativeElement as HTMLElement).querySelector(
-      '.kratos-message--error',
-    );
-    expect(errorMessage?.textContent).toContain('not a valid email');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('not a valid email');
   });
 });

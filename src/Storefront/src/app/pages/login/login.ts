@@ -9,7 +9,6 @@ import { KratosFlowForm } from '../../shared/kratos-flow-form/kratos-flow-form';
   selector: 'app-login',
   imports: [KratosFlowForm, RouterLink],
   templateUrl: './login.html',
-  styleUrl: './login.scss',
 })
 export class Login implements OnInit {
   private readonly kratosFlows = inject(KratosFlowService);
