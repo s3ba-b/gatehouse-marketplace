@@ -10,16 +10,22 @@ const string kratosImageTag = "v26.2.0";
 const string oathkeeperImage = "oryd/oathkeeper";
 const string oathkeeperImageTag = "v0.40.9";
 
-// Kratos's DSN is a bare postgres:// URI (below), and Aspire's default generated
-// password can contain characters (e.g. '{') that are invalid in a URI's userinfo
-// component per RFC 3986 — Go's net/url then refuses to parse the DSN and
-// kratos-migrate crashes. Restricting the generated password to alphanumeric
-// characters keeps it always URI-safe without needing to percent-encode it.
-var postgresPassword = builder.AddParameter(
-    "postgres-password",
-    new GenerateParameterDefault { Special = false },
-    secret: true
-);
+// The Postgres password is a fixed, committed, dev-only value (read from
+// appsettings.json's Parameters section) rather than an Aspire-generated one, for
+// two reasons:
+//   1. Persistence: WithDataVolume() below keeps the data directory across
+//      container (re)starts, and Postgres only applies POSTGRES_PASSWORD on first
+//      initialization. Aspire's generated password changes on every (re)start, so
+//      later starts fail authentication against the already-initialized volume
+//      (Aspire docs: "Named volumes require a consistent password between app
+//      launches"). Under Aspire orchestration the container is recreated more than
+//      once per run, so this breaks even within a single CI run.
+//   2. URI-safety: the value is interpolated into Kratos's bare postgres:// DSN
+//      below, whose userinfo component rejects characters like '{' per RFC 3986
+//      (Go's net/url then refuses to parse it). A fixed value kept to
+//      URI-unreserved characters avoids percent-encoding.
+// Same committed dev-only-secret posture as kratos.yml — never use in production.
+var postgresPassword = builder.AddParameter("postgres-password", secret: true);
 
 var postgres = builder
     .AddPostgres("postgres", password: postgresPassword)
