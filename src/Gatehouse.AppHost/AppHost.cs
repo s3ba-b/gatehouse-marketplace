@@ -10,7 +10,21 @@ const string kratosImageTag = "v26.2.0";
 const string oathkeeperImage = "oryd/oathkeeper";
 const string oathkeeperImageTag = "v0.40.9";
 
-var postgres = builder.AddPostgres("postgres").WithImageTag("18.4").WithDataVolume();
+// Kratos's DSN is a bare postgres:// URI (below), and Aspire's default generated
+// password can contain characters (e.g. '{') that are invalid in a URI's userinfo
+// component per RFC 3986 — Go's net/url then refuses to parse the DSN and
+// kratos-migrate crashes. Restricting the generated password to alphanumeric
+// characters keeps it always URI-safe without needing to percent-encode it.
+var postgresPassword = builder.AddParameter(
+    "postgres-password",
+    new GenerateParameterDefault { Special = false },
+    secret: true
+);
+
+var postgres = builder
+    .AddPostgres("postgres", password: postgresPassword)
+    .WithImageTag("18.4")
+    .WithDataVolume();
 
 // Kratos gets its own database, separate from the future application domain database
 // (CHARTER.md data layer: one Postgres database per Ory component).
