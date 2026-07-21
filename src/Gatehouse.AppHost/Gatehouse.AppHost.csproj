@@ -9,4 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.4.6" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gatehouse.Catalog\Gatehouse.Catalog.csproj" />
+  </ItemGroup>
 </Project>

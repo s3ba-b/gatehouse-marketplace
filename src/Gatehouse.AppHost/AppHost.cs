@@ -37,4 +37,9 @@ builder
     .WaitFor(kratosDb)
     .WaitForCompletion(kratosMigrate);
 
+// The first .NET service for M0's walking skeleton (CLAUDE.md). No auth of its
+// own and no gateway in front of it yet — direct reachability is intentional
+// until the Oathkeeper gateway issue lands.
+builder.AddProject<Projects.Gatehouse_Catalog>("catalog");
+
 builder.Build().Run();
