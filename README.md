@@ -72,9 +72,42 @@ rationale live in [CHARTER.md](CHARTER.md); the delivery plan in [ROADMAP.md](RO
 
 ### Run locally
 
+Kratos flows are stateful and cookie-based, and the SPA calls Kratos and the gateway
+directly from the browser — so they all need to live under one shared base domain
+(subdomains), or the session cookie and CORS silently break (CHARTER.md). Add these
+entries to your hosts file (`/etc/hosts` on Linux/macOS, `C:\Windows\System32\drivers\etc\hosts`
+on Windows) — they all resolve to loopback, no real DNS involved:
+
+```
+127.0.0.1 kratos.gatehouse.test
+127.0.0.1 gateway.gatehouse.test
+127.0.0.1 storefront.gatehouse.test
+```
+
+Then, in two terminals:
+
 ```bash
-# TODO (M0): a single documented command, cold start ≤ 10 minutes
+# Terminal 1 — Kratos, PostgreSQL, Oathkeeper, and the Catalog service
 aspire run
+
+# Terminal 2 — the Storefront (Angular)
+cd src/Storefront
+npm install
+npm start
+```
+
+Open `http://storefront.gatehouse.test:4200`. The Playwright happy-path test
+(registration → login → an authenticated request through the gateway) needs the same
+two things running first:
+
+```bash
+cd src/Storefront
+npx playwright install chromium   # once
+npm run e2e
+```
+
+```bash
+# TODO (M0 / issue #11): a single documented command, cold start ≤ 10 minutes
 ```
 
 ## Architecture

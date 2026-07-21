@@ -1,0 +1,32 @@
+.kratos-flow-form {
+  max-width: 24rem;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  button {
+    align-self: flex-start;
+  }
+}
+
+.kratos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  &--checkbox {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.kratos-message {
+  color: inherit;
+
+  &--error {
+    color: #b3261e;
+  }
+}

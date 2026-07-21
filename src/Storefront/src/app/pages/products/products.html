@@ -1,0 +1,16 @@
+<h1>Products</h1>
+
+@if (error()) {
+  <p class="page-error">{{ error() }}</p>
+  <p><a routerLink="/login">Log in</a></p>
+}
+
+@if (products(); as items) {
+  <ul>
+    @for (item of items; track item.id) {
+      <li>{{ item.name }} — {{ item.price | currency }}</li>
+    }
+  </ul>
+} @else if (!error()) {
+  <p>Loading…</p>
+}

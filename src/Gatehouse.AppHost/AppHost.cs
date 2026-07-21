@@ -53,7 +53,11 @@ var kratos = builder
     .AddContainer("kratos", kratosImage, kratosImageTag)
     .WithBindMount(kratosConfigPath, "/etc/config/kratos", isReadOnly: true)
     .WithEnvironment("DSN", kratosDsn)
-    .WithArgs("serve", "--config", "/etc/config/kratos/kratos.yml")
+    // --dev: without it Kratos marks its session/CSRF cookies Secure, which browsers
+    // refuse to send back over the plain-http gatehouse.test subdomains this local
+    // setup uses (verified against a real container — see README.md "Run locally").
+    // Dev-only, same posture as the committed secrets in kratos.yml.
+    .WithArgs("serve", "--dev", "--config", "/etc/config/kratos/kratos.yml")
     // Not proxied: Kratos's own base_url (kratos.yml) bakes in these exact ports, and
     // self-service flows redirect to it, so the advertised and bound ports must match.
     .WithHttpEndpoint(port: 4433, targetPort: 4433, name: "public", isProxied: false)

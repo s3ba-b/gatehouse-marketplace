@@ -1,17 +1,27 @@
 dsn: memory
 
+# Kratos ships no UI (CHARTER.md) — self-service flows redirect the browser to
+# the Storefront app instead of Kratos's own (nonexistent) pages, and the
+# cookie/CORS setup below is what makes that work: Kratos, Oathkeeper, and the
+# Storefront dev server all live under subdomains of one shared base domain
+# (see README.md "Run locally" for the required /etc/hosts entries), so the
+# Kratos session cookie set on that shared domain is visible to Oathkeeper's
+# cookie_session authenticator too.
 serve:
   public:
-    base_url: http://127.0.0.1:4433/
+    base_url: http://kratos.gatehouse.test:4433/
     cors:
       enabled: true
+      allowed_origins:
+        - http://storefront.gatehouse.test:4200
+      allow_credentials: true
   admin:
     base_url: http://127.0.0.1:4434/
 
 selfservice:
-  default_browser_return_url: http://127.0.0.1:4433/
+  default_browser_return_url: http://storefront.gatehouse.test:4200/
   allowed_return_urls:
-    - http://127.0.0.1:4433/
+    - http://storefront.gatehouse.test:4200/
 
   methods:
     password:
@@ -19,14 +29,14 @@ selfservice:
 
   flows:
     error:
-      ui_url: http://127.0.0.1:4433/error
+      ui_url: http://storefront.gatehouse.test:4200/error
 
     login:
-      ui_url: http://127.0.0.1:4433/login
+      ui_url: http://storefront.gatehouse.test:4200/login
       lifespan: 10m
 
     registration:
-      ui_url: http://127.0.0.1:4433/registration
+      ui_url: http://storefront.gatehouse.test:4200/registration
       lifespan: 10m
       after:
         password:
@@ -45,6 +55,16 @@ selfservice:
 log:
   level: info
   format: text
+
+# Session cookie set on the shared base domain rather than host-only on
+# kratos.gatehouse.test, so the browser also sends it to
+# gateway.gatehouse.test — that's what lets Oathkeeper's cookie_session
+# authenticator see it. Same-site because every subdomain is same registrable
+# domain (SameSite compares the "site", i.e. gatehouse.test, not the full
+# host), so Lax works over plain http without a Secure/None cookie.
+cookies:
+  domain: gatehouse.test
+  same_site: Lax
 
 secrets:
   cookie:

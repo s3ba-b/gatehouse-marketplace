@@ -1,0 +1,51 @@
+<div class="kratos-flow-form">
+  @for (message of flowMessages; track message.id) {
+    <p class="kratos-message" [class.kratos-message--error]="message.type === 'error'">
+      {{ message.text }}
+    </p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onFormSubmit($event)">
+    @for (node of hiddenFieldNodes; track node.attributes.name) {
+      <input type="hidden" [formControlName]="controlKey(node.attributes.name)" />
+    }
+
+    @for (node of textFieldNodes; track node.attributes.name) {
+      <label class="kratos-field">
+        <span>{{ labelFor(node) }}</span>
+        <input
+          [type]="node.attributes.type"
+          [formControlName]="controlKey(node.attributes.name)"
+          [required]="!!node.attributes.required"
+          [attr.autocomplete]="node.attributes.autocomplete ?? null"
+          [attr.data-kratos-node]="node.attributes.name"
+        />
+        @for (message of node.messages; track message.id) {
+          <span class="kratos-message kratos-message--error">{{ message.text }}</span>
+        }
+      </label>
+    }
+
+    @for (node of checkboxFieldNodes; track node.attributes.name) {
+      <label class="kratos-field kratos-field--checkbox">
+        <input
+          type="checkbox"
+          [formControlName]="controlKey(node.attributes.name)"
+          [attr.data-kratos-node]="node.attributes.name"
+        />
+        <span>{{ labelFor(node) }}</span>
+      </label>
+    }
+
+    @for (node of actionNodes; track node.attributes.name + ':' + node.attributes.value) {
+      <button
+        type="submit"
+        [attr.name]="node.attributes.name"
+        [attr.value]="node.attributes.value"
+        [attr.data-kratos-node]="node.attributes.name + ':' + node.attributes.value"
+      >
+        {{ labelFor(node) }}
+      </button>
+    }
+  </form>
+</div>

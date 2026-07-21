@@ -1,0 +1,13 @@
+<h1>Log in</h1>
+
+@if (error()) {
+  <p class="page-error">{{ error() }}</p>
+}
+
+@if (flow(); as currentFlow) {
+  <app-kratos-flow-form [flow]="currentFlow" (submitted)="onSubmitted($event)" />
+} @else if (!error()) {
+  <p>Loading…</p>
+}
+
+<p><a routerLink="/registration">Need an account? Register</a></p>
