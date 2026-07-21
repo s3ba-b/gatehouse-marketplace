@@ -51,6 +51,11 @@ it may simply not be broken down into issues yet.
   `aspire-init`, `aspire-orchestration`, `aspire-monitoring`, `aspire-deployment`) —
   consult them for AppHost setup, running/monitoring the app, and deployment; don't
   reinvent Aspire conventions from scratch.
+- **`.mcp.json` registers the Aspire MCP server by hand.** `aspire agent init
+  --non-interactive` detects Claude Code and logs that it's wiring `.mcp.json`, but
+  silently skips writing it — the MCP step only runs through the interactive prompt.
+  If you ever regenerate agent config, verify `.mcp.json` still has the `aspire`
+  entry afterward instead of assuming the CLI wrote it.
 - **Formatting is CI-enforced and version-pinned.** Run `dotnet tool restore` once,
   then `dotnet csharpier check .` (or `dotnet csharpier .` to fix) before pushing
   .NET changes. Front-end changes go through `npx prettier --check .` and
