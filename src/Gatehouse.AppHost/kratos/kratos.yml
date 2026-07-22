@@ -87,3 +87,16 @@ identity:
   schemas:
     - id: default
       url: file:///etc/config/kratos/identity.schema.json
+
+# Dev mail sink (CHARTER.md "Email (dev)", issue #22) — "mailhog" resolves to the
+# MailHog container on the shared network in both orchestrators (AppHost.cs's
+# AddContainer("mailhog", ...) and docker-compose.yml's mailhog service), same
+# single-source-of-truth approach as access-rules.json.tmpl. MailHog needs no
+# credentials and doesn't speak STARTTLS, hence disable_starttls. Read delivered
+# mail at http://localhost:8025 (README.md "Run locally"). Dev-only, never a real
+# mail provider.
+courier:
+  smtp:
+    connection_uri: smtp://mailhog:1025/?disable_starttls=true
+    from_address: no-reply@gatehouse.test
+    from_name: Gatehouse (dev)

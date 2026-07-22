@@ -10,6 +10,12 @@ const string kratosImageTag = "v26.2.0";
 const string oathkeeperImage = "oryd/oathkeeper";
 const string oathkeeperImageTag = "v0.40.9";
 
+// Dev-only mail sink (CHARTER.md "Email (dev)", issue #22) — Kratos's courier sends
+// real SMTP mail here instead of a real provider. Pinned like the other component
+// images even though upstream barely tags releases.
+const string mailhogImage = "mailhog/mailhog";
+const string mailhogImageTag = "v1.0.1";
+
 // The Postgres password is a fixed, committed, dev-only value (read from
 // appsettings.json's Parameters section) rather than an Aspire-generated one, for
 // two reasons:
@@ -40,6 +46,15 @@ var kratosDsn = ReferenceExpression.Create(
     $"postgres://{postgres.Resource.UserNameReference}:{postgres.Resource.PasswordParameter}@{postgres.Resource.Host}:{postgres.Resource.Port}/{kratosDb.Resource.DatabaseName}?sslmode=disable&max_conns=20&max_idle_conns=4"
 );
 
+// SMTP port for Kratos's courier (kratos.yml's courier.smtp.connection_uri targets
+// this resource by name) and the web UI a developer (or Playwright) reads delivered
+// mail from — no auth, dev-only, per CLAUDE.md.
+var mailhog = builder
+    .AddContainer("mailhog", mailhogImage, mailhogImageTag)
+    .WithEndpoint(port: 1025, targetPort: 1025, name: "smtp", isProxied: false)
+    .WithHttpEndpoint(port: 8025, targetPort: 8025, name: "ui", isProxied: false)
+    .WithHttpHealthCheck(endpointName: "ui");
+
 var kratosConfigPath = Path.Combine(builder.AppHostDirectory, "kratos");
 
 var kratosMigrate = builder
@@ -64,7 +79,8 @@ var kratos = builder
     .WithHttpEndpoint(port: 4434, targetPort: 4434, name: "admin", isProxied: false)
     .WithHttpHealthCheck("/health/ready", endpointName: "public")
     .WaitFor(kratosDb)
-    .WaitForCompletion(kratosMigrate);
+    .WaitForCompletion(kratosMigrate)
+    .WaitFor(mailhog);
 
 // The first .NET service for M0's walking skeleton (CLAUDE.md). Oathkeeper below
 // is the only intended way in; nothing else in the app model routes to it.
