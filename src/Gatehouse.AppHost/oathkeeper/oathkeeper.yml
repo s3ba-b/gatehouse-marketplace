@@ -3,8 +3,13 @@ serve:
     port: 4455
     cors:
       enabled: true
+      # Browsers reject a wildcard origin on credentialed (cookie-carrying)
+      # requests, so this names the Storefront dev server explicitly rather
+      # than "*" — see kratos.yml and README.md "Run locally" for the shared
+      # gatehouse.test base domain this and the Kratos session cookie rely on.
       allowed_origins:
-        - "*"
+        - http://storefront.gatehouse.test:4200
+      allow_credentials: true
   api:
     port: 4456
 
