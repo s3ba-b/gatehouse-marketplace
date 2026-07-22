@@ -1,0 +1,11 @@
+# Build context for the Catalog image (docker-compose.yml: context: .). Excluding
+# local bin/obj is not just hygiene — a stale, host-restored obj/project.assets.json
+# copied into the image clobbers the container's own `dotnet restore` and breaks
+# `dotnet publish --no-restore` with a misleading "package was not found" error.
+**/[Bb]in/
+**/[Oo]bj/
+.git/
+.github/
+tests/
+src/Storefront/
+docs/

@@ -1,0 +1,138 @@
+# Portable reference run (CHARTER.md / issue #11) — mirrors the topology
+# orchestrated by src/Gatehouse.AppHost/AppHost.cs (Aspire is for development; this
+# is the single-command, Docker-only path). Keep the two in sync: same image tags,
+# same bind-mounted Kratos/Oathkeeper config, same access-rules.json.tmpl
+# substitution trick, same gatehouse.test hosts-file requirement (README.md).
+services:
+  postgres:
+    image: postgres:18.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env — see .env.example}
+      # Only Kratos needs a database in M0 (CLAUDE.md: one Postgres database per Ory
+      # component); the application domain database lands in M3.
+      POSTGRES_DB: kratos
+    volumes:
+      # postgres 18+ images key the data directory off the major version under
+      # /var/lib/postgresql itself (docker-library/postgres#1259) — mounting at
+      # the old .../data path makes the entrypoint refuse to start.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Same DSN Kratos itself uses below — schema must exist before Kratos serves.
+  kratos-migrate:
+    image: oryd/kratos:v26.2.0
+    volumes:
+      - ./src/Gatehouse.AppHost/kratos:/etc/config/kratos:ro
+    environment:
+      DSN: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+    command: ["migrate", "sql", "-e", "--yes"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  kratos:
+    image: oryd/kratos:v26.2.0
+    volumes:
+      - ./src/Gatehouse.AppHost/kratos:/etc/config/kratos:ro
+    environment:
+      DSN: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+    # --dev: see the comment on this same flag in AppHost.cs (non-Secure cookies for
+    # plain-http gatehouse.test).
+    command: ["serve", "--dev", "--config", "/etc/config/kratos/kratos.yml"]
+    ports:
+      - "4433:4433"
+      - "4434:4434"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:4433/health/ready",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kratos-migrate:
+        condition: service_completed_successfully
+
+  catalog:
+    build:
+      context: .
+      dockerfile: src/Gatehouse.Catalog/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      # IssuerUrl is a literal string match against the id_token mutator's
+      # issuer_url (oathkeeper.yml) — not a network address, so it stays
+      # http://localhost:4456/ as committed in appsettings.json. JwksUri IS a real
+      # network call (OathkeeperJwksProvider.cs), so it has to resolve on the
+      # compose network — overridden here to the oathkeeper service name.
+      Oathkeeper__JwksUri: http://oathkeeper:4456/.well-known/jwks.json
+    healthcheck:
+      # No curl/wget in the aspnet runtime image; a bash /dev/tcp probe is enough to
+      # confirm the service is accepting connections.
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Gateway in front of the Catalog service (issue #7 / ADR 0001) — see the matching
+  # comment in AppHost.cs. The catalog upstream address is fixed here (compose
+  # service name + port), unlike Aspire where it's only known once the container
+  # tunnel to the host-process project resolves, but the substitution mechanism is
+  # kept identical so access-rules.json.tmpl stays the single source of truth.
+  oathkeeper:
+    image: oryd/oathkeeper:v0.40.9
+    volumes:
+      - ./src/Gatehouse.AppHost/oathkeeper:/etc/config/oathkeeper:ro
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        sed "s#__CATALOG_UPSTREAM_URL__#http://catalog:8080#" \
+          /etc/config/oathkeeper/access-rules.json.tmpl > /tmp/access-rules.json &&
+        exec oathkeeper serve --config /etc/config/oathkeeper/oathkeeper.yml
+    ports:
+      - "4455:4455"
+      - "4456:4456"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:4456/health/alive",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      kratos:
+        condition: service_healthy
+      catalog:
+        condition: service_healthy
+
+  storefront:
+    build:
+      context: src/Storefront
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      oathkeeper:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
