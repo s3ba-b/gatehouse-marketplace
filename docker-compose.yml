@@ -35,6 +35,28 @@ services:
       postgres:
         condition: service_healthy
 
+  # Dev-only mail sink (CHARTER.md "Email (dev)", issue #22) — Kratos's courier
+  # (kratos.yml courier.smtp.connection_uri) sends real SMTP mail here instead of a
+  # real provider. Web UI at http://localhost:8025 (README.md "Run locally").
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:8025/",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   kratos:
     image: oryd/kratos:v26.2.0
     volumes:
@@ -65,6 +87,8 @@ services:
         condition: service_healthy
       kratos-migrate:
         condition: service_completed_successfully
+      mailhog:
+        condition: service_healthy
 
   catalog:
     build:
