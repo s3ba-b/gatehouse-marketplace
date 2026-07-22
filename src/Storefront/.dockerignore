@@ -1,0 +1,4 @@
+# Build context for the Storefront image (docker-compose.yml: context: src/Storefront).
+node_modules/
+dist/
+.angular/

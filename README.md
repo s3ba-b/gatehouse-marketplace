@@ -84,7 +84,11 @@ on Windows) — they all resolve to loopback, no real DNS involved:
 127.0.0.1 storefront.gatehouse.test
 ```
 
-Then, in two terminals:
+Two ways to bring the stack up, depending on what's installed:
+
+#### Option A — Aspire (for development)
+
+In two terminals:
 
 ```bash
 # Terminal 1 — Kratos, PostgreSQL, Oathkeeper, and the Catalog service
@@ -106,9 +110,30 @@ npx playwright install chromium   # once
 npm run e2e
 ```
 
+#### Option B — Docker Compose (portable reference run)
+
+Needs only Docker — no .NET/Aspire toolchain, no Node.js. One command, after copying
+the dev-only environment file:
+
 ```bash
-# TODO (M0 / issue #11): a single documented command, cold start ≤ 10 minutes
+cp .env.example .env
+docker compose up -d --build
 ```
+
+This builds the Catalog service and Storefront images (multi-stage Dockerfiles under
+`src/Gatehouse.Catalog/` and `src/Storefront/`) and brings up the same topology as the
+Aspire AppHost — Kratos, PostgreSQL, Oathkeeper, Catalog, Storefront — with the same
+pinned image versions and bind-mounted Kratos/Oathkeeper config. Open
+`http://storefront.gatehouse.test:4200` once every container reports healthy
+(`docker compose ps`).
+
+Measured cold start on a clean checkout (`docker compose down -v` plus every image,
+including base images, removed first — the worst case a newcomer would actually hit):
+**~55 seconds**, well under the ≤ 10 minute success measure (ROADMAP.md). The dominant
+cost is pulling the Ory and .NET base images; on a slower connection than the one this
+was measured on, budget more time for that step specifically.
+
+Tear down with `docker compose down` (add `-v` to also drop the Postgres volume).
 
 ## Architecture
 
