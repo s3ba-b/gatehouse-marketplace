@@ -143,6 +143,27 @@ is enabled (email verification, account recovery — both land in later M1 issue
 read the delivered message, including the verification/recovery link, at MailHog's
 web UI: **http://localhost:8025**. Same URL under both Aspire and Docker Compose.
 
+#### Identity schemas
+
+Kratos registers two identity schemas (issue #23) — `customer`
+([customer.schema.json](src/Gatehouse.AppHost/kratos/customer.schema.json), the
+`default_schema_id`) and `vendor-staff`
+([vendor-staff.schema.json](src/Gatehouse.AppHost/kratos/vendor-staff.schema.json)) —
+each with the profile traits its population needs (GLOSSARY.md). The Storefront
+registration flow targets the customer schema. There is no Vendor Back-office UI yet
+(that's M2, once Keto org membership exists), so a vendor-staff identity is created
+directly through Kratos's admin API instead, against the same admin port both
+orchestrators expose at `127.0.0.1:4434`:
+
+```bash
+curl -s -X POST http://127.0.0.1:4434/admin/identities \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "schema_id": "vendor-staff",
+    "traits": { "email": "staff@example.test", "name": { "first": "Jane", "last": "Doe" } }
+  }'
+```
+
 ## Architecture
 
 _TODO: architecture diagram + overview (M5)._ The short version: an Angular SPA talks

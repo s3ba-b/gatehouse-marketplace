@@ -83,10 +83,18 @@ hashers:
     cost: 8
 
 identity:
-  default_schema_id: default
+  # Two populations, two schemas (CHARTER.md "configurable identity schemas",
+  # issue #23): retail customers register through the Storefront against the
+  # default schema; a vendor-staff identity is created against the second one
+  # (README.md "Identity schemas" — org membership/roles are Keto tuples, M2,
+  # not traits here). Schema files are the single source of truth for their
+  # traits — documented inline via each schema's title/description.
+  default_schema_id: customer
   schemas:
-    - id: default
-      url: file:///etc/config/kratos/identity.schema.json
+    - id: customer
+      url: file:///etc/config/kratos/customer.schema.json
+    - id: vendor-staff
+      url: file:///etc/config/kratos/vendor-staff.schema.json
 
 # Dev mail sink (CHARTER.md "Email (dev)", issue #22) — "mailhog" resolves to the
 # MailHog container on the shared network in both orchestrators (AppHost.cs's
