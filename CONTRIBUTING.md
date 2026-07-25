@@ -40,8 +40,16 @@ aspire run
 # Backend (unit + Aspire/Testcontainers integration tests, incl. the security gate)
 dotnet test
 
-# TODO (M0): Playwright for the e2e flows
+# E2E (Playwright) — needs Kratos, Oathkeeper, and the Catalog service already
+# running (`aspire run`, or `docker compose up -d` — see README.md "Run locally")
+cd src/Storefront
+npx playwright install chromium   # once
+npm run e2e
 ```
+
+CI runs the same `npm run e2e` command as a blocking gate against the Docker
+Compose reference run (`.github/workflows/ci.yml`, job `e2e-gate`) — a red e2e
+run fails the pipeline the same way a red `dotnet test` does.
 
 ## The core architectural rule
 

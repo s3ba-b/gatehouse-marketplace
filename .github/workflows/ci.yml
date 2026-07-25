@@ -180,3 +180,88 @@ jobs:
       # available on the GitHub-hosted runner out of the box.
       - name: Run the security test suite
         run: dotnet test --configuration Release --filter "Category=Security|Category=Isolation" --verbosity normal
+
+  # ---------------------------------------------------------------------------
+  # M1 DoD requires "Playwright covers the flows" to stay true over time, not
+  # just at the moment a flow spec is written (issue #24) — so this gate boots
+  # the same topology as the Docker Compose reference run (README.md "Run
+  # locally", Option B) and runs the suite against it. Gated on backend+frontend
+  # passing first: it is the most expensive job (image builds + full stack
+  # boot), so a PR that's already red on formatting/build/unit tests fails fast
+  # without paying for it.
+  # ---------------------------------------------------------------------------
+  e2e-gate:
+    name: E2E gate (Playwright)
+    needs: [detect, backend, frontend]
+    if: needs.detect.outputs.backend == 'true' && needs.detect.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Kratos flows are cookie-based and the SPA calls Kratos/the gateway
+      # directly from the browser, so everything must share a base domain
+      # (README.md "Run locally") — same hosts entries a contributor adds
+      # locally, added here for the runner.
+      - name: Add gatehouse.test hosts entries
+        run: |
+          echo "127.0.0.1 kratos.gatehouse.test" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 gateway.gatehouse.test" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 storefront.gatehouse.test" | sudo tee -a /etc/hosts
+
+      # Only the dev-only, already-committed default (see .env.example) —
+      # no real secret involved.
+      - name: Configure environment
+        run: cp .env.example .env
+
+      # Requesting oathkeeper is enough: depends_on pulls in kratos and catalog,
+      # which pull in postgres, kratos-migrate, and mailhog. storefront is
+      # deliberately left out — Playwright runs its own dev server below, the
+      # same way Option A (Aspire) works, so the spec always exercises the
+      # latest build rather than whatever the storefront image last baked in.
+      - name: Boot the backend (Docker Compose)
+        run: docker compose up -d --build --wait oathkeeper
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: src/Storefront/package-lock.json
+
+      - name: Install
+        working-directory: src/Storefront
+        run: npm ci
+
+      - name: Resolve installed Playwright version
+        id: playwright-version
+        working-directory: src/Storefront
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: src/Storefront
+        run: npx playwright install --with-deps chromium
+
+      # Cache hit still needs the OS-level deps Playwright wants; only the
+      # downloaded browser binaries are skipped.
+      - name: Install Playwright OS dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: src/Storefront
+        run: npx playwright install-deps chromium
+
+      # Same command contributors run locally (README.md "Run locally",
+      # CONTRIBUTING.md "Running tests) — playwright.config.ts starts the
+      # Storefront dev server itself and points it at the stack booted above.
+      - name: Run the e2e suite
+        working-directory: src/Storefront
+        run: npm run e2e
+
+      - name: Tear down the backend
+        if: always()
+        run: docker compose down -v
