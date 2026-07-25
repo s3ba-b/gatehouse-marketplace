@@ -1,0 +1,49 @@
+{
+  "$id": "https://raw.githubusercontent.com/s3ba-b/gatehouse-marketplace/main/src/Gatehouse.AppHost/kratos/vendor-staff.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Vendor Staff",
+  "description": "A person belonging to a vendor organization (GLOSSARY.md). Org membership and role (owner/manager/staff) are Keto relation tuples, not identity traits (M2) — this schema only carries the profile fields a staff account needs.",
+  "type": "object",
+  "properties": {
+    "traits": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "title": "E-Mail",
+          "minLength": 3,
+          "ory.sh/kratos": {
+            "credentials": {
+              "password": {
+                "identifier": true
+              }
+            }
+          }
+        },
+        "name": {
+          "type": "object",
+          "title": "Name",
+          "description": "Displayed to other staff in the Vendor Back-office (M2) and on the Keto/Oathkeeper audit trail.",
+          "properties": {
+            "first": {
+              "type": "string",
+              "title": "First name"
+            },
+            "last": {
+              "type": "string",
+              "title": "Last name"
+            }
+          }
+        },
+        "phone": {
+          "type": "string",
+          "title": "Work phone",
+          "description": "Optional work contact number (PRIVACY.md) — e.g. for step-up MFA notifications on sensitive vendor operations (CHARTER.md)."
+        }
+      },
+      "required": ["email"],
+      "additionalProperties": false
+    }
+  }
+}
