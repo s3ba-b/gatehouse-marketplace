@@ -26,6 +26,11 @@ selfservice:
   methods:
     password:
       enabled: true
+    # Shared by verification (and, later, recovery) — code is Kratos's recommended
+    # strategy over the legacy "link" method (issue #25): the flow-node renderer
+    # shows a code input the same way it shows any other field, no dedicated UI.
+    code:
+      enabled: true
 
   flows:
     error:
@@ -43,12 +48,20 @@ selfservice:
           hooks:
             - hook: session
 
-    # Email verification and account recovery are M1 (CHARTER.md) — this schema has
-    # no verification/recovery traits yet, so both flows stay off rather than
-    # half-configured.
+    # Email trait is a verification address in both schemas (issue #23's schemas,
+    # amended by issue #25), so as soon as registration creates an identity, Kratos
+    # sends the verification mail on its own — no explicit post-registration hook
+    # needed (https://www.ory.com/docs/kratos/self-service/flows/verify-email-account-activation).
     verification:
-      enabled: false
+      enabled: true
+      ui_url: http://storefront.gatehouse.test:4200/verification
+      use: code
+      lifespan: 1h
+      after:
+        default_browser_return_url: http://storefront.gatehouse.test:4200/products
 
+    # Account recovery is a separate issue (#25's notes) — the schema traits are
+    # verification addresses only, recovery stays off rather than half-configured.
     recovery:
       enabled: false
 
