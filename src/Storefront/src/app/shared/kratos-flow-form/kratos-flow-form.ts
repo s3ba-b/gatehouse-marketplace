@@ -48,6 +48,14 @@ export class KratosFlowForm implements OnChanges {
     return this.inputNodes.filter((node) => this.isActionNode(node));
   }
 
+  // "a" nodes aren't inputs (e.g. the "Continue" link Kratos's verification
+  // flow returns once the code passes, pointing at after.default_browser_return_url
+  // in kratos.yml) — rendered generically like everything else here rather than
+  // a page hardcoding what happens next.
+  get linkNodes(): KratosUiNode[] {
+    return this.flow.ui.nodes.filter((node) => node.type === 'a');
+  }
+
   labelFor(node: KratosUiNode): string {
     return node.meta.label?.text ?? node.attributes.name;
   }

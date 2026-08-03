@@ -50,4 +50,13 @@
       </button>
     }
   </form>
+
+  @for (node of linkNodes; track node.attributes.href) {
+    <a
+      [href]="node.attributes.href"
+      [attr.data-kratos-node]="node.attributes.id"
+      class="mt-4 inline-block text-blue-600 hover:underline"
+      >{{ labelFor(node) }}</a
+    >
+  }
 </div>

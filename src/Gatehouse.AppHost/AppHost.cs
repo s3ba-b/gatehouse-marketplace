@@ -72,7 +72,12 @@ var kratos = builder
     // refuse to send back over the plain-http gatehouse.test subdomains this local
     // setup uses (verified against a real container — see README.md "Run locally").
     // Dev-only, same posture as the committed secrets in kratos.yml.
-    .WithArgs("serve", "--dev", "--config", "/etc/config/kratos/kratos.yml")
+    // --watch-courier: without it Kratos enqueues courier messages (e.g. the
+    // verification mail, issue #25) but never dispatches them — confirmed against a
+    // real container, where "Sending out verification email" logged but MailHog
+    // stayed empty until this flag was added. Single-instance dev setup, so running
+    // it as a background task inside the same process is fine.
+    .WithArgs("serve", "--dev", "--watch-courier", "--config", "/etc/config/kratos/kratos.yml")
     // Not proxied: Kratos's own base_url (kratos.yml) bakes in these exact ports, and
     // self-service flows redirect to it, so the advertised and bound ports must match.
     .WithHttpEndpoint(port: 4433, targetPort: 4433, name: "public", isProxied: false)
