@@ -19,6 +19,7 @@ export interface KratosUiNodeAttributes {
   src?: string;
   href?: string;
   autocomplete?: string;
+  id?: string;
 }
 
 export interface KratosUiNode {
