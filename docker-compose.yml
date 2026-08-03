@@ -64,8 +64,9 @@ services:
     environment:
       DSN: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
     # --dev: see the comment on this same flag in AppHost.cs (non-Secure cookies for
-    # plain-http gatehouse.test).
-    command: ["serve", "--dev", "--config", "/etc/config/kratos/kratos.yml"]
+    # plain-http gatehouse.test). --watch-courier: same file, same comment — without
+    # it queued courier mail (e.g. verification, issue #25) is never dispatched.
+    command: ["serve", "--dev", "--watch-courier", "--config", "/etc/config/kratos/kratos.yml"]
     ports:
       - "4433:4433"
       - "4434:4434"
