@@ -51,3 +51,19 @@ export function isKratosFlow(value: unknown): value is KratosFlow {
     typeof (value as { ui: unknown }).ui === 'object'
   );
 }
+
+// Kratos's answer when a flow's outcome has nowhere to go but another flow's
+// UI — e.g. a successful recovery code has no flow-body or session outcome of
+// its own, only the settings flow it hands off to for the password-set step
+// (verified against a real container: 422 browser_location_change_required).
+export interface KratosBrowserLocationRedirect {
+  redirect_browser_to: string;
+}
+
+export function isBrowserLocationRedirect(value: unknown): value is KratosBrowserLocationRedirect {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { redirect_browser_to: unknown }).redirect_browser_to === 'string'
+  );
+}

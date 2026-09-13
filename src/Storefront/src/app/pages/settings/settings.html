@@ -1,5 +1,5 @@
 <div class="mx-auto max-w-md p-6">
-  <h1 class="text-2xl font-semibold">Log in</h1>
+  <h1 class="text-2xl font-semibold">Account settings</h1>
 
   @if (error()) {
     <p class="mt-4 text-red-700">{{ error() }}</p>
@@ -12,13 +12,4 @@
   } @else if (!error()) {
     <p class="mt-4">Loading…</p>
   }
-
-  <p class="mt-4">
-    <a routerLink="/registration" class="text-blue-600 hover:underline"
-      >Need an account? Register</a
-    >
-  </p>
-  <p class="mt-2">
-    <a routerLink="/recovery" class="text-blue-600 hover:underline">Forgot your password?</a>
-  </p>
 </div>

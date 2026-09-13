@@ -139,9 +139,10 @@ Tear down with `docker compose down` (add `-v` to also drop the Postgres volume)
 
 Kratos's courier is wired to send real SMTP mail to [MailHog](https://github.com/mailhog/MailHog),
 a local dev-only sink — no real provider, no credentials. Registration sends a
-verification mail automatically (issue #25; account recovery is a later M1 issue).
-Read the delivered message, including the verification code and link, at MailHog's
-web UI: **http://localhost:8025**. Same URL under both Aspire and Docker Compose.
+verification mail automatically (issue #25), and the Storefront's recovery page
+(`/recovery`, issue #26) sends a recovery mail on request. Read the delivered message,
+including the verification/recovery code, at MailHog's web UI:
+**http://localhost:8025**. Same URL under both Aspire and Docker Compose.
 
 #### Identity schemas
 
