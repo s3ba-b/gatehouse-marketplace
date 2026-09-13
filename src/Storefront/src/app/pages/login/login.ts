@@ -34,7 +34,7 @@ export class Login implements OnInit {
       next: (result) => {
         if (result.kind === 'success') {
           void this.router.navigateByUrl('/products');
-        } else {
+        } else if (result.kind === 'needs-input') {
           this.flow.set(result.flow);
         }
       },

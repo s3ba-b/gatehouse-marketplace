@@ -60,10 +60,24 @@ selfservice:
       after:
         default_browser_return_url: http://storefront.gatehouse.test:4200/products
 
-    # Account recovery is a separate issue (#25's notes) — the schema traits are
-    # verification addresses only, recovery stays off rather than half-configured.
+    # Email trait is now also a recovery address in both schemas (issue #26),
+    # so the code strategy shared with verification can drive this flow too —
+    # same generic flow-node renderer, no dedicated recovery UI.
     recovery:
-      enabled: false
+      enabled: true
+      ui_url: http://storefront.gatehouse.test:4200/recovery
+      use: code
+      lifespan: 1h
+
+    # Foundation for the settings page (issue #27) — enabled here already
+    # because a successful recovery code has no flow-body outcome of its own;
+    # Kratos unconditionally hands the browser to this flow instead for the
+    # password-set step (verified against a real container, no "after" hook
+    # involved). Issue #27 builds out the rest of this page (profile traits,
+    # MFA method groups).
+    settings:
+      ui_url: http://storefront.gatehouse.test:4200/settings
+      privileged_session_max_age: 15m
 
 log:
   level: info
