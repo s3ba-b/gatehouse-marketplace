@@ -40,6 +40,11 @@ export interface KratosUiContainer {
 export interface KratosFlow {
   id: string;
   ui: KratosUiContainer;
+  // Set when the flow was started with ?return_to= — e.g. the refresh login
+  // a too-old settings submit hands off to carries Kratos's own settings URL
+  // here (verified against a real container). Kratos only accepts return_to
+  // values allowed by kratos.yml, so following it is not an open redirect.
+  return_to?: string;
 }
 
 export function isKratosFlow(value: unknown): value is KratosFlow {

@@ -6,9 +6,27 @@
   }
 
   @if (flow(); as currentFlow) {
-    <div class="mt-4">
-      <app-kratos-flow-form [flow]="currentFlow" (submitted)="onSubmitted($event)" />
-    </div>
+    @for (message of currentFlow.ui.messages ?? []; track message.id) {
+      <p
+        class="mt-4"
+        [class.text-red-700]="message.type === 'error'"
+        [class.text-green-700]="message.type === 'success'"
+      >
+        {{ message.text }}
+      </p>
+    }
+
+    @for (group of methodGroups(); track group) {
+      <section class="mt-6" [attr.data-kratos-group]="group">
+        <h2 class="mb-2 text-lg font-semibold">{{ groupTitle(group) }}</h2>
+        <app-kratos-flow-form
+          [flow]="currentFlow"
+          [groups]="['default', group]"
+          [showFlowMessages]="false"
+          (submitted)="onSubmitted($event)"
+        />
+      </section>
+    }
   } @else if (!error()) {
     <p class="mt-4">Loading…</p>
   }

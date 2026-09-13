@@ -144,6 +144,15 @@ verification mail automatically (issue #25), and the Storefront's recovery page
 including the verification/recovery code, at MailHog's web UI:
 **http://localhost:8025**. Same URL under both Aspire and Docker Compose.
 
+#### Account settings
+
+A logged-in customer changes their password and profile traits at `/settings` (issue
+#27, linked from the products page), rendered from Kratos's settings flow — one section
+per method group, so TOTP/WebAuthn enrollment shows up there once those methods are
+enabled. Changing the password more than 15 minutes after logging in
+(`privileged_session_max_age` in `kratos.yml`) first asks for the password again, then
+returns to the settings page to save.
+
 #### Identity schemas
 
 Kratos registers two identity schemas (issue #23) — `customer`

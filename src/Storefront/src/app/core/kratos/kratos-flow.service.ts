@@ -51,6 +51,17 @@ export class KratosFlowService {
     });
   }
 
+  // Resumes the refresh login a too-old settings submit hands off to: Kratos
+  // redirects the browser to the login ui_url with ?flow=<id> (verified
+  // against a real container), rather than the Storefront starting one.
+  getLoginFlow(id: string): Observable<KratosFlow> {
+    return this.http.get<KratosFlow>(`${KRATOS_PUBLIC_URL}/self-service/login/flows`, {
+      headers: JSON_HEADERS,
+      params: { id },
+      withCredentials: true,
+    });
+  }
+
   // Resumes a flow by id instead of starting a new one — what the
   // Storefront's verification page needs when the browser lands on it via
   // the ?flow=<id> query param Kratos redirects to after the user clicks the
@@ -101,7 +112,15 @@ export class KratosFlowService {
           // own (unlike verification), so Kratos answers 422
           // browser_location_change_required with the settings URL to send
           // the browser to instead (verified against a real container).
-          if (error.status === 422 && isBrowserLocationRedirect(error.error)) {
+          //
+          // Settings answers a submit from a session older than kratos.yml's
+          // privileged_session_max_age the same way, only as 403
+          // session_refresh_required pointing at a refresh login (verified
+          // against a real container) — the same outcome for the caller.
+          if (
+            (error.status === 422 || error.status === 403) &&
+            isBrowserLocationRedirect(error.error)
+          ) {
             return of<FlowSubmitResult>({ kind: 'redirect', url: error.error.redirect_browser_to });
           }
 

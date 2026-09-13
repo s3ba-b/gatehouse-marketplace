@@ -69,12 +69,14 @@ selfservice:
       use: code
       lifespan: 1h
 
-    # Foundation for the settings page (issue #27) — enabled here already
-    # because a successful recovery code has no flow-body outcome of its own;
-    # Kratos unconditionally hands the browser to this flow instead for the
-    # password-set step (verified against a real container, no "after" hook
-    # involved). Issue #27 builds out the rest of this page (profile traits,
-    # MFA method groups).
+    # Storefront account settings page (issue #27): profile traits and password
+    # change, one section per method group the flow returns, so TOTP/WebAuthn
+    # (issues #28/#29) appear there once enabled above. Also where a successful
+    # recovery code hands the browser for the password-set step (issue #26).
+    # Changing a credential with a session older than privileged_session_max_age
+    # is refused with 403 session_refresh_required and a refresh-login redirect
+    # that returns to the same flow; profile-only trait changes are not gated
+    # (both verified against a real container).
     settings:
       ui_url: http://storefront.gatehouse.test:4200/settings
       privileged_session_max_age: 15m
