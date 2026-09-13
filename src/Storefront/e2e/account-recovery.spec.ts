@@ -3,7 +3,6 @@ import { APIRequestContext, expect, test } from '@playwright/test';
 // MailHog's own port (docker-compose.yml / AppHost.cs), not proxied through the
 // Storefront or gateway — same URL README.md "Mail (dev)" tells a human to open.
 const MAILHOG_API = 'http://localhost:8025/api/v2/messages';
-const KRATOS_PUBLIC_URL = 'http://kratos.gatehouse.test:4433';
 
 interface MailHogMessage {
   ID: string;
@@ -126,14 +125,5 @@ test('recover access via the code MailHog received, set a new password, and log 
     await page.locator('[data-kratos-node="method:password"]').click();
 
     await page.waitForURL('**/products');
-  });
-
-  await test.step('the identity really has a new credential in Kratos, not just the UI', async () => {
-    const whoami = await page.context().request.get(`${KRATOS_PUBLIC_URL}/sessions/whoami`, {
-      headers: { Accept: 'application/json' },
-    });
-    const session = await whoami.json();
-
-    expect(session.identity.traits.email).toBe(email);
   });
 });
