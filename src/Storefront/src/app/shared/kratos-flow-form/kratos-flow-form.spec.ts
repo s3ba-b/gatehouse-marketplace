@@ -116,6 +116,33 @@ describe('KratosFlowForm', () => {
     ]);
   });
 
+  it('renders only the given groups when restricted, emitting only their values', () => {
+    const emitted: Record<string, unknown>[] = [];
+    component.submitted.subscribe((value) => emitted.push(value));
+
+    fixture.componentRef.setInput('groups', ['password']);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-kratos-node="identifier"]')).toBeNull();
+    expect(element.querySelector('[data-kratos-node="password"]')).not.toBeNull();
+
+    component.form.setValue({ password: 'correct-horse-battery-staple' });
+    (element.querySelector('button') as HTMLButtonElement).click();
+
+    expect(emitted).toEqual([{ password: 'correct-horse-battery-staple', method: 'password' }]);
+  });
+
+  it('hides flow-level messages when showFlowMessages is off', () => {
+    const nextFlow = buildFlow();
+    nextFlow.ui.messages = [{ id: 5, text: 'Your changes have been saved!', type: 'success' }];
+    fixture.componentRef.setInput('flow', nextFlow);
+    fixture.componentRef.setInput('showFlowMessages', false);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('saved');
+  });
+
   it('rebuilds the form when a new flow (e.g. after a validation error) is set', () => {
     const nextFlow = buildFlow();
     nextFlow.ui.nodes[1].messages = [{ id: 4, text: 'not a valid email', type: 'error' }];

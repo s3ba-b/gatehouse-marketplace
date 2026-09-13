@@ -13,18 +13,26 @@ import { KratosFlow, KratosUiNode, KratosUiText } from '../../core/kratos/kratos
 })
 export class KratosFlowForm implements OnChanges {
   @Input({ required: true }) flow!: KratosFlow;
+  // Restricts this form to nodes of the given groups — how a page renders one
+  // form per method (e.g. settings' profile vs. password, and later totp/
+  // webauthn), each posting only its own fields plus the "default" group's
+  // csrf_token. Unset renders every node, as login/registration do.
+  @Input() groups?: readonly string[];
+  // Off when a page renders several forms for one flow and shows its
+  // flow-level messages ("Your changes have been saved!") once itself.
+  @Input() showFlowMessages = true;
   @Output() readonly submitted = new EventEmitter<Record<string, unknown>>();
 
   form = new FormGroup({});
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['flow']) {
+    if (changes['flow'] || changes['groups']) {
       this.rebuildForm();
     }
   }
 
   get flowMessages(): KratosUiText[] {
-    return this.flow.ui.messages ?? [];
+    return this.showFlowMessages ? (this.flow.ui.messages ?? []) : [];
   }
 
   get hiddenFieldNodes(): KratosUiNode[] {
@@ -53,7 +61,7 @@ export class KratosFlowForm implements OnChanges {
   // in kratos.yml) — rendered generically like everything else here rather than
   // a page hardcoding what happens next.
   get linkNodes(): KratosUiNode[] {
-    return this.flow.ui.nodes.filter((node) => node.type === 'a');
+    return this.visibleNodes.filter((node) => node.type === 'a');
   }
 
   labelFor(node: KratosUiNode): string {
@@ -101,7 +109,14 @@ export class KratosFlowForm implements OnChanges {
   }
 
   private get inputNodes(): KratosUiNode[] {
-    return this.flow.ui.nodes.filter((node) => node.type === 'input');
+    return this.visibleNodes.filter((node) => node.type === 'input');
+  }
+
+  private get visibleNodes(): KratosUiNode[] {
+    const groups = this.groups;
+    return groups
+      ? this.flow.ui.nodes.filter((node) => groups.includes(node.group))
+      : this.flow.ui.nodes;
   }
 
   private isActionNode(node: KratosUiNode): boolean {
