@@ -4,9 +4,12 @@ import { Observable, catchError, map, of, throwError } from 'rxjs';
 
 import { KRATOS_PUBLIC_URL } from '../gatehouse-endpoints';
 import { toNestedPayload } from './flow-payload';
-import { KratosFlow, isKratosFlow } from './kratos-flow.model';
+import { KratosFlow, isBrowserLocationRedirect, isKratosFlow } from './kratos-flow.model';
 
-export type FlowSubmitResult = { kind: 'success' } | { kind: 'needs-input'; flow: KratosFlow };
+export type FlowSubmitResult =
+  | { kind: 'success' }
+  | { kind: 'needs-input'; flow: KratosFlow }
+  | { kind: 'redirect'; url: string };
 
 // Requesting with Accept: application/json is what makes Kratos answer a
 // browser-type flow with JSON instead of a 303 redirect to its own (absent)
@@ -27,6 +30,25 @@ export class KratosFlowService {
 
   initVerificationFlow(): Observable<KratosFlow> {
     return this.initFlow('/self-service/verification/browser');
+  }
+
+  initRecoveryFlow(): Observable<KratosFlow> {
+    return this.initFlow('/self-service/recovery/browser');
+  }
+
+  initSettingsFlow(): Observable<KratosFlow> {
+    return this.initFlow('/self-service/settings/browser');
+  }
+
+  // Resumes the settings flow recovery hands off to: recovery's completion
+  // redirects the browser here with ?flow=<id> rather than returning the
+  // settings flow body directly (see submitFlow's 'redirect' outcome below).
+  getSettingsFlow(id: string): Observable<KratosFlow> {
+    return this.http.get<KratosFlow>(`${KRATOS_PUBLIC_URL}/self-service/settings/flows`, {
+      headers: JSON_HEADERS,
+      params: { id },
+      withCredentials: true,
+    });
   }
 
   // Resumes a flow by id instead of starting a new one — what the
@@ -73,6 +95,14 @@ export class KratosFlowService {
           // 400 and the updated flow to render next — not a real failure.
           if (error.status === 400 && isKratosFlow(error.error)) {
             return of<FlowSubmitResult>({ kind: 'needs-input', flow: error.error });
+          }
+
+          // Recovery's completion has no flow-body or session outcome of its
+          // own (unlike verification), so Kratos answers 422
+          // browser_location_change_required with the settings URL to send
+          // the browser to instead (verified against a real container).
+          if (error.status === 422 && isBrowserLocationRedirect(error.error)) {
+            return of<FlowSubmitResult>({ kind: 'redirect', url: error.error.redirect_browser_to });
           }
 
           return throwError(() => error);
